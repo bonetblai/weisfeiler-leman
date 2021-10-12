@@ -24,6 +24,7 @@
 using namespace std;
 
 using uint = unsigned int;
+using ulong = unsigned long;
 using Node = uint;
 using Nodes = vector<Node>;
 using Label = ulong;
