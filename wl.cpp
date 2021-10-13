@@ -145,7 +145,6 @@ int main(int argc, const char **argv) {
     string filename = argv[1];
     cout << "Reading file '" << filename << "' ..." << endl;
 
-
     GraphLibrary::GraphDatabase graph_db;
     if( boost::algorithm::ends_with(filename, ".lp") ) {
         // reading a graph description from clingo file (ext .lp)
@@ -172,7 +171,7 @@ int main(int argc, const char **argv) {
         // Maps node to color.
         unordered_map<Node, Label> node_to_color;
 
-        // Compute stable coloring
+        // Compute stable coloring.
         auto start = chrono::high_resolution_clock::now();
         cra.compute_stable_coloring(node_colors,
                                     colors_to_nodes,
