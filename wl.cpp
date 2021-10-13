@@ -151,7 +151,6 @@ int main(int argc, const char **argv) {
         ifstream ifs(filename, ifstream::in);
         if( ifs.is_open() ) {
             GraphLibrary::Graph g = read_lp_graph(ifs);
-            cout << "graph: #nodes=" << g.get_num_nodes() << ", #edges=" << g.get_num_edges() << endl;
             graph_db.emplace_back(move(g));
             ifs.close();
         } else {
