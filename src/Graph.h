@@ -13,11 +13,14 @@
  *
  * Amenability_test can not be copied or distributed without the express
  * permission of Christopher Morris.
+ *
+ * Modified by Blai Bonet (c) 2021
  *********************************************************************/
 
-#ifndef AMENABILITY_TEST_GRAPH_H
-#define AMENABILITY_TEST_GRAPH_H
+#ifndef GRAPH_H
+#define GRAPH_H
 
+#include <algorithm>
 #include <unordered_set>
 #include <vector>
 
@@ -79,44 +82,91 @@ namespace std {
             return seed;
         }
     };
-
 }
 
 namespace GraphLibrary {
     class Graph {
-    public:
-        Graph();
-
-        Graph(const uint num_nodes, const EdgeList &edgeList, const Labels node_labels);
+      public:
+        Graph(bool directed = false)
+          : m_num_nodes(0),
+            m_num_edges(0),
+            m_node_labels(),
+            m_directed(directed) {
+        }
+        Graph(const uint num_nodes,
+              const EdgeList &edgeList,
+              const Labels node_labels,
+              bool directed = false)
+          : m_adjacency_lists_outbound(),
+            m_adjacency_lists_inbound(),
+            m_num_nodes(num_nodes),
+            m_num_edges(0),
+            m_node_labels(node_labels),
+            m_directed(directed) {
+            m_adjacency_lists_outbound.resize(num_nodes);
+            m_adjacency_lists_inbound.resize(num_nodes);
+            for( auto const &e : edgeList )
+                add_edge(e.first, e.second);
+        }
 
         // Add a single node to the graph.
-        size_t add_node();
+        size_t add_node() {
+            m_adjacency_lists_outbound.push_back(vector<Node>{ });
+            m_adjacency_lists_inbound.push_back(vector<Node>{ });
+            return m_num_nodes++;
+        }
 
         // Add a single edge to the graph.
-        void add_edge(const Node v, const Node w);
+        void add_edge(const Node v, const Node w) {
+            m_adjacency_lists_outbound[v].push_back(w);
+            m_adjacency_lists_inbound[w].push_back(v);
+            ++m_num_edges;
+            if( !m_directed ) {
+                m_adjacency_lists_outbound[w].push_back(v);
+                m_adjacency_lists_inbound[v].push_back(w);
+                ++m_num_edges;
+            }
+        }
 
         // Get degree of node "v".
-        size_t get_degree(const Node v) const;
+        size_t get_degree(const Node v) const {
+            return m_directed ? get_out_degree(v) + get_in_degree(v) : get_out_degree(v);
+        }
+        size_t get_in_degree(const Node v) const {
+            return m_adjacency_lists_outbound[v].size();
+        }
+        size_t get_out_degree(const Node v) const {
+            return m_adjacency_lists_inbound[v].size();
+        }
 
         // Get neighbors of node "v".
-        Nodes get_neighbours(const Node v) const;
+        const Nodes& get_neighbors(const Node v) const {
+            return m_adjacency_lists_outbound[v];
+        }
 
         // Get number of nodes in graph.
-        size_t get_num_nodes() const;
+        size_t get_num_nodes() const {
+            return m_num_nodes;
+        }
 
         // Get number of edges in graph.
-        size_t get_num_edges() const;
+        size_t get_num_edges() const {
+            return m_num_edges;
+        }
 
         // Get node labels of graphs.
-        Labels get_labels() const;
+        const Labels& get_labels() const {
+            return m_node_labels;
+        }
 
         // Returns "true" if edge {u,w} exists, otherwise "false".
-        bool has_edge(const Node v, const Node w) const;
+        bool has_edge(const Node v, const Node w) const {
+            return find(m_adjacency_lists_outbound[v].begin(), m_adjacency_lists_outbound[v].end(), w) != m_adjacency_lists_outbound[v].end();
+        }
 
-        ~Graph();
-
-    private:
-        vector<vector<Node>> m_adjacency_lists;
+      private:
+        vector<vector<Node>> m_adjacency_lists_outbound;
+        vector<vector<Node>> m_adjacency_lists_inbound;
 
         // Manage number of nodes in graph.
         size_t m_num_nodes;
@@ -124,9 +174,12 @@ namespace GraphLibrary {
         size_t m_num_edges;
         // Manage node labels.
         Labels m_node_labels;
+        // Directed graph?
+        const bool m_directed;
     };
 
     typedef vector<Graph> GraphDatabase;
 }
 
-#endif //AMENABILITY_TEST_GRAPH_H
+#endif // GRAPH_H
+
