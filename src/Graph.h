@@ -21,19 +21,20 @@
 #define GRAPH_H
 
 #include <algorithm>
+#include <set>
 #include <unordered_set>
 #include <vector>
 
-using namespace std;
+//using namespace std;
 
 using uint = unsigned int;
 using ulong = unsigned long;
 using Node = uint;
-using Nodes = vector<Node>;
+using Nodes = std::vector<Node>;
 using Label = ulong;
-using Labels = vector<Label>;
-using Edge = pair<Node, Node>;
-using EdgeList = vector<Edge>;
+using Labels = std::vector<Label>;
+using Edge = uint;
+using Edges = std::vector<Edge>;
 
 namespace std {
     namespace {
@@ -87,20 +88,43 @@ namespace std {
 namespace GraphLibrary {
     class Graph {
       public:
+        // Ctors/dtor.
         Graph(bool directed = false)
           : m_num_nodes(0),
-            m_num_edges(0),
-            m_node_labels(),
             m_directed(directed) {
         }
         Graph(const uint num_nodes,
-              const EdgeList &edgeList,
               const Labels node_labels,
               bool directed = false)
-          : m_adjacency_lists_outbound(),
-            m_adjacency_lists_inbound(),
-            m_num_nodes(num_nodes),
-            m_num_edges(0),
+          : m_num_nodes(num_nodes),
+            m_node_labels(node_labels),
+            m_directed(directed) {
+            m_adjacency_lists_outbound.resize(num_nodes);
+            m_adjacency_lists_inbound.resize(num_nodes);
+        }
+        Graph(const uint num_nodes,
+              const Nodes &edges_src,
+              const Nodes &edges_dst,
+              const Labels &edge_labels,
+              const Labels node_labels,
+              bool directed = false)
+          : m_num_nodes(num_nodes),
+            m_node_labels(node_labels),
+            m_directed(directed) {
+            m_adjacency_lists_outbound.resize(num_nodes);
+            m_adjacency_lists_inbound.resize(num_nodes);
+            assert(edges_src.size() == edges_dst.size());
+            assert(edges_src.size() == edge_labels.size());
+            for( size_t i = 0; i < edges_src.size(); ++i ) {
+                Label label = edge_labels.at(i);
+                add_edge(edges_src.at(i), edges_dst.at(i), label);
+            }
+        }
+        Graph(const uint num_nodes,
+              const std::vector<std::pair<Node, Node>> &edgeList,
+              const Labels node_labels,
+              bool directed = false)
+          : m_num_nodes(num_nodes),
             m_node_labels(node_labels),
             m_directed(directed) {
             m_adjacency_lists_outbound.resize(num_nodes);
@@ -108,24 +132,41 @@ namespace GraphLibrary {
             for( auto const &e : edgeList )
                 add_edge(e.first, e.second);
         }
+        ~Graph() { }
 
         // Add a single node to the graph.
         size_t add_node() {
-            m_adjacency_lists_outbound.push_back(vector<Node>{ });
-            m_adjacency_lists_inbound.push_back(vector<Node>{ });
+            m_adjacency_lists_outbound.push_back(std::vector<Node>{ });
+            m_adjacency_lists_inbound.push_back(std::vector<Node>{ });
             return m_num_nodes++;
         }
 
         // Add a single edge to the graph.
-        void add_edge(const Node v, const Node w) {
-            m_adjacency_lists_outbound[v].push_back(w);
-            m_adjacency_lists_inbound[w].push_back(v);
-            ++m_num_edges;
+        void add_edge(const Node v, const Node w, Label label = 0) {
+            size_t n = get_num_edges();
+            m_adjacency_lists_outbound.at(v).push_back(n);
+            m_adjacency_lists_inbound.at(w).push_back(n);
+            m_edges_src.push_back(v);
+            m_edges_dst.push_back(w);
+            m_edge_labels.push_back(label);
+            m_set_edge_labels.insert(label);
+
             if( !m_directed ) {
-                m_adjacency_lists_outbound[w].push_back(v);
-                m_adjacency_lists_inbound[v].push_back(w);
-                ++m_num_edges;
+                size_t n = get_num_edges();
+                m_adjacency_lists_outbound.at(w).push_back(n);
+                m_adjacency_lists_inbound.at(v).push_back(n);
+                m_edges_src.push_back(w);
+                m_edges_dst.push_back(v);
+                m_edge_labels.push_back(label);
             }
+        }
+
+        // Get src/dst for edge
+        Node get_src(const Edge e) const {
+            return m_edges_src.at(e);
+        }
+        Node get_dst(const Edge e) const {
+            return m_edges_dst.at(e);
         }
 
         // Get degree of node "v".
@@ -133,15 +174,32 @@ namespace GraphLibrary {
             return m_directed ? get_out_degree(v) + get_in_degree(v) : get_out_degree(v);
         }
         size_t get_in_degree(const Node v) const {
-            return m_adjacency_lists_outbound[v].size();
+            return m_adjacency_lists_outbound.at(v).size();
         }
         size_t get_out_degree(const Node v) const {
-            return m_adjacency_lists_inbound[v].size();
+            return m_adjacency_lists_inbound.at(v).size();
         }
 
-        // Get neighbors of node "v".
-        const Nodes& get_neighbors(const Node v) const {
-            return m_adjacency_lists_outbound[v];
+        // Get incident edges at node "v".
+        const Edges& get_outbound_edges(const Node v) const {
+            return m_adjacency_lists_outbound.at(v);
+        }
+        const Edges& get_inbound_edges(const Node v) const {
+            return m_adjacency_lists_inbound.at(v);
+        }
+        Edges get_incident_edges(const Node v) const {
+            Edges incident_edges(get_outbound_edges(v));
+            const Edges &inbound_edges = get_inbound_edges(v);
+            incident_edges.insert(incident_edges.end(), inbound_edges.begin(), inbound_edges.end());
+            return incident_edges;
+        }
+
+        // Get edge labels and their set.
+        const std::set<Label>& get_set_edge_labels() const {
+            return m_set_edge_labels;
+        }
+        const std::vector<Label>& get_edge_labels() const {
+            return m_edge_labels;
         }
 
         // Get number of nodes in graph.
@@ -151,7 +209,7 @@ namespace GraphLibrary {
 
         // Get number of edges in graph.
         size_t get_num_edges() const {
-            return m_num_edges;
+            return m_edges_src.size();
         }
 
         // Get node labels of graphs.
@@ -161,24 +219,39 @@ namespace GraphLibrary {
 
         // Returns "true" if edge {u,w} exists, otherwise "false".
         bool has_edge(const Node v, const Node w) const {
-            return find(m_adjacency_lists_outbound[v].begin(), m_adjacency_lists_outbound[v].end(), w) != m_adjacency_lists_outbound[v].end();
+            for( Edge e : m_adjacency_lists_outbound.at(v) ) {
+                if( (get_src(e) == v) && (get_dst(e) == w) )
+                    return true;
+            }
+            return false;
+        }
+
+        // Whether graph is directed/undirected
+        bool directed() const {
+            return m_directed;
+        }
+        bool undirected() const {
+            return !directed();
         }
 
       private:
-        vector<vector<Node>> m_adjacency_lists_outbound;
-        vector<vector<Node>> m_adjacency_lists_inbound;
+        std::vector<Edges> m_adjacency_lists_outbound;
+        std::vector<Edges> m_adjacency_lists_inbound;
+        std::vector<Node> m_edges_src;
+        std::vector<Node> m_edges_dst;
+
+        std::set<Label> m_set_edge_labels;
+        Labels m_edge_labels;
 
         // Manage number of nodes in graph.
         size_t m_num_nodes;
-        // Manage number of edges in graph.
-        size_t m_num_edges;
         // Manage node labels.
         Labels m_node_labels;
         // Directed graph?
         const bool m_directed;
     };
 
-    typedef vector<Graph> GraphDatabase;
+    typedef std::vector<Graph> GraphDatabase;
 }
 
 #endif // GRAPH_H
