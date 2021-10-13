@@ -93,6 +93,28 @@ namespace GraphLibrary {
           : m_num_nodes(0),
             m_directed(directed) {
         }
+        Graph(const Graph &graph)
+          : m_adjacency_lists_outbound(graph.m_adjacency_lists_outbound),
+            m_adjacency_lists_inbound(graph.m_adjacency_lists_inbound),
+            m_edges_src(graph.m_edges_src),
+            m_edges_dst(graph.m_edges_dst),
+            m_set_edge_labels(graph.m_set_edge_labels),
+            m_edge_labels(graph.m_edge_labels),
+            m_node_labels(graph.m_node_labels),
+            m_num_nodes(graph.m_num_nodes),
+            m_directed(graph.m_directed) {
+        }
+        Graph(Graph &&graph)
+          : m_adjacency_lists_outbound(std::move(graph.m_adjacency_lists_outbound)),
+            m_adjacency_lists_inbound(std::move(graph.m_adjacency_lists_inbound)),
+            m_edges_src(std::move(graph.m_edges_src)),
+            m_edges_dst(std::move(graph.m_edges_dst)),
+            m_set_edge_labels(std::move(graph.m_set_edge_labels)),
+            m_edge_labels(std::move(graph.m_edge_labels)),
+            m_node_labels(std::move(graph.m_node_labels)),
+            m_num_nodes(graph.m_num_nodes),
+            m_directed(graph.m_directed) {
+        }
         Graph(const uint num_nodes,
               const Labels node_labels,
               bool directed = false)
@@ -242,12 +264,9 @@ namespace GraphLibrary {
 
         std::set<Label> m_set_edge_labels;
         Labels m_edge_labels;
-
-        // Manage number of nodes in graph.
-        size_t m_num_nodes;
-        // Manage node labels.
         Labels m_node_labels;
-        // Directed graph?
+
+        size_t m_num_nodes;
         const bool m_directed;
     };
 
