@@ -9,8 +9,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <Graph.h>
-//#include "src/AuxiliaryMethods.h"
-#include "src/ColorRefinementAmenability.h"
+#include "src/ColorRefinement.h"
 
 
 using namespace std;
@@ -89,7 +88,7 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs) {
         } else if( starts_with(ifs_line, "tlabel(") ) {
             vector<string> args = get_args(ifs_line);
             assert(args.size() == 2);
-            int index = atoi(args[1].c_str());
+            int label = atoi(args[1].c_str());
             vector<string> edge_args = get_args(args[0]);
             assert(edge_args.size() == 2);
             string src = edge_args[0];
@@ -97,7 +96,7 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs) {
             pair<string, string> edge(src, dst);
             if( map_edge_labels.find(edge) == map_edge_labels.end() )
                 map_edge_labels.emplace(edge, vector<int>{});
-            map_edge_labels[edge].push_back(index);
+            map_edge_labels[edge].push_back(label);
         }
     }
 
@@ -118,15 +117,23 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs) {
             assert(map_label.find(it->second[i]) != map_label.end());
     }
 
-    // make and return graph
-    Labels labels(num_nodes, 0);
-    EdgeList edge_list(num_edges);
+    // normalize edge labels
+    map<int, int> remap_label;
+    for( map<int, string>::const_iterator it = map_label.begin(); it != map_label.end(); ++it )
+        remap_label.emplace(it->first, remap_label.size());
+
+    // construct and return graph
+    Labels node_labels(num_nodes, 0);
+    Labels edge_labels;
+    Nodes edges_src, edges_dst;
     for( map<pair<string, string>, int>::const_iterator it = map_edge.begin(); it != map_edge.end(); ++it ) {
-        Node src = map_node[it->first.first];
-        Node dst = map_node[it->first.second];
-        edge_list[it->second] = { src, dst };
+        edges_src.push_back(map_node.at(it->first.first));
+        edges_dst.push_back(map_node.at(it->first.second));
+        const vector<int> &labels = map_edge_labels.at(it->first);
+        assert(labels.size() == 1);
+        edge_labels.push_back(remap_label.at(labels.front()));
     }
-    return GraphLibrary::Graph(num_nodes, edge_list, labels);
+    return GraphLibrary::Graph(num_nodes, edges_src, edges_dst, edge_labels, node_labels, true);
 }
 
 int main(int argc, const char **argv) {
@@ -154,10 +161,9 @@ int main(int argc, const char **argv) {
         }
     }
 
-    auto start = chrono::high_resolution_clock::now();
     for( size_t i = 0; i < graph_db.size(); ++i ) {
         const GraphLibrary::Graph &g = graph_db[i];
-        ColorRefinementAmenability::ColorRefinementAmenability cra(g);
+        ColorRefinement::ColorRefinement cra(g);
 
         // Manages colors of stable coloring.
         unordered_set<Label> node_colors;
@@ -167,27 +173,16 @@ int main(int argc, const char **argv) {
         unordered_map<Node, Label> node_to_color;
 
         // Compute stable coloring
-        Labeling labeling = cra.compute_stable_coloring(node_colors, colors_to_nodes, node_to_color);
+        auto start = chrono::high_resolution_clock::now();
+        cra.compute_stable_coloring(node_colors,
+                                    colors_to_nodes,
+                                    node_to_color,
+                                    g.get_set_edge_labels().size(),
+                                    g.get_edge_labels());
+        auto end = chrono::high_resolution_clock::now();
+        double elapsed = chrono::duration<double>(end - start).count();
+        cout << "WL: #colors=" << node_colors.size() << ", elapsed-time=" << elapsed << endl;
     }
-
-#if 0
-    GraphDatabase graph_data_base = AuxiliaryMethods::read_graph_txt_file("NCI1");
-    cout << "Graph data base loaded." << endl;
-
-    double num_is_amenable = 0;
-    for (const auto g: graph_data_base) {
-        ColorRefinementAmenability::ColorRefinementAmenability cra(g);
-        if (cra.check_amenability()) {
-            num_is_amenable += 1;
-        }
-    }
-
-    cout << num_is_amenable / graph_data_base.size() * 100.0 << endl;
-    cout << "Running time [s]: " << chrono::duration<double>(end - start).count() / graph_data_base.size() << endl;
-#endif
-    auto end = chrono::high_resolution_clock::now();
-    double elapsed = chrono::duration<double>(end - start).count();
-    cout << "WL coloring calculated in " << elapsed << " seconds" << endl;
 
     return 0;
 }
