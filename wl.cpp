@@ -180,6 +180,15 @@ int main(int argc, const char **argv) {
         auto end = chrono::high_resolution_clock::now();
         double elapsed = chrono::duration<double>(end - start).count();
         cout << "WL: #colors=" << node_colors.size() << ", elapsed-time=" << elapsed << endl;
+
+        // Print summary of coloring.
+        uint total = 0;
+        for( Label label : node_colors ) {
+            uint n = colors_to_nodes.count(label);
+            total += n;
+            cout << n << " node(s) with color " << label << endl;
+        }
+        cout << "total " << total << " node(s)" << endl;
     }
 
     return 0;
