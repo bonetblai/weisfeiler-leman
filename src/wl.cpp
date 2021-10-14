@@ -8,8 +8,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <Graph.h>
-#include "src/ColorRefinement.h"
+#include "Graph.h"
+#include "ColorRefinement.h"
 
 
 using namespace std;
@@ -123,7 +123,7 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs) {
         remap_label.emplace(it->first, remap_label.size());
 
     // construct and return graph
-    Labels node_labels(num_nodes, 0);
+    Labels node_labels(num_nodes, 1);
     Labels edge_labels;
     Nodes edges_src, edges_dst;
     for( map<pair<string, string>, int>::const_iterator it = map_edge.begin(); it != map_edge.end(); ++it ) {
@@ -175,6 +175,7 @@ int main(int argc, const char **argv) {
         cra.compute_stable_coloring(node_colors,
                                     colors_to_nodes,
                                     node_to_color,
+                                    g.get_node_labels(),
                                     g.get_set_edge_labels().size(),
                                     g.get_edge_labels());
         auto end = chrono::high_resolution_clock::now();
