@@ -1,15 +1,7 @@
-# Amenability Test ###
-Implementation of the algorithm described in the paper ["On the Power of Color Refinement"](https://link.springer.com/chapter/10.1007/978-3-319-22177-9_26).
+# Weisfeiler-Leman Coloring Algorithm ###
 
-```Bash
-$ cd src
-$ make amenability_test wl
-```
-## Usage
-You can select the data set in `main.cpp`.
+Implements the Weisfeiler-Leman coloring algorithm on directed graphs with edge/vertex colors.
 
-## More Data Sets
-See [Benchmark Data Sets for Graph Kernels](http://graphkernels.cs.tu-dortmund.de) for more data sets.
+Implementation upon code by the Amenability Test by Christopher Morris (https://github.com/chrsmrrs/amenability_test.git).
 
-## Contact Information
-If you have any questions, send an email to Christopher Morris (christopher.morris at udo.edu).
+
