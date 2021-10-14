@@ -98,9 +98,10 @@ namespace GraphLibrary {
             m_adjacency_lists_inbound(graph.m_adjacency_lists_inbound),
             m_edges_src(graph.m_edges_src),
             m_edges_dst(graph.m_edges_dst),
+            m_set_node_labels(graph.m_set_node_labels),
+            m_node_labels(graph.m_node_labels),
             m_set_edge_labels(graph.m_set_edge_labels),
             m_edge_labels(graph.m_edge_labels),
-            m_node_labels(graph.m_node_labels),
             m_num_nodes(graph.m_num_nodes),
             m_directed(graph.m_directed) {
         }
@@ -109,9 +110,10 @@ namespace GraphLibrary {
             m_adjacency_lists_inbound(std::move(graph.m_adjacency_lists_inbound)),
             m_edges_src(std::move(graph.m_edges_src)),
             m_edges_dst(std::move(graph.m_edges_dst)),
+            m_set_node_labels(std::move(graph.m_set_node_labels)),
+            m_node_labels(std::move(graph.m_node_labels)),
             m_set_edge_labels(std::move(graph.m_set_edge_labels)),
             m_edge_labels(std::move(graph.m_edge_labels)),
-            m_node_labels(std::move(graph.m_node_labels)),
             m_num_nodes(graph.m_num_nodes),
             m_directed(graph.m_directed) {
         }
@@ -123,12 +125,13 @@ namespace GraphLibrary {
             m_directed(directed) {
             m_adjacency_lists_outbound.resize(num_nodes);
             m_adjacency_lists_inbound.resize(num_nodes);
+            m_set_node_labels.insert(m_node_labels.begin(), m_node_labels.end());
         }
         Graph(const uint num_nodes,
               const Nodes &edges_src,
               const Nodes &edges_dst,
               const Labels &edge_labels,
-              const Labels node_labels,
+              const Labels &node_labels,
               bool directed = false)
           : m_num_nodes(num_nodes),
             m_node_labels(node_labels),
@@ -141,10 +144,11 @@ namespace GraphLibrary {
                 Label label = edge_labels.at(i);
                 add_edge(edges_src.at(i), edges_dst.at(i), label);
             }
+            m_set_node_labels.insert(m_node_labels.begin(), m_node_labels.end());
         }
         Graph(const uint num_nodes,
               const std::vector<std::pair<Node, Node>> &edgeList,
-              const Labels node_labels,
+              const Labels &node_labels,
               bool directed = false)
           : m_num_nodes(num_nodes),
             m_node_labels(node_labels),
@@ -153,13 +157,16 @@ namespace GraphLibrary {
             m_adjacency_lists_inbound.resize(num_nodes);
             for( auto const &e : edgeList )
                 add_edge(e.first, e.second);
+            m_set_node_labels.insert(m_node_labels.begin(), m_node_labels.end());
         }
         ~Graph() { }
 
         // Add a single node to the graph.
-        size_t add_node() {
+        size_t add_node(Label label = 0) {
             m_adjacency_lists_outbound.push_back(std::vector<Node>{ });
             m_adjacency_lists_inbound.push_back(std::vector<Node>{ });
+            m_node_labels.push_back(label);
+            m_set_node_labels.insert(label);
             return m_num_nodes++;
         }
 
@@ -216,27 +223,26 @@ namespace GraphLibrary {
             return incident_edges;
         }
 
-        // Get edge labels and their set.
+        // Get number of nodes/edges in graph.
+        size_t get_num_nodes() const {
+            return m_num_nodes;
+        }
+        size_t get_num_edges() const {
+            return m_edges_src.size();
+        }
+
+        // Get labels and their sets.
+        const std::set<Label>& get_set_node_labels() const {
+            return m_set_node_labels;
+        }
+        const Labels& get_node_labels() const {
+            return m_node_labels;
+        }
         const std::set<Label>& get_set_edge_labels() const {
             return m_set_edge_labels;
         }
         const std::vector<Label>& get_edge_labels() const {
             return m_edge_labels;
-        }
-
-        // Get number of nodes in graph.
-        size_t get_num_nodes() const {
-            return m_num_nodes;
-        }
-
-        // Get number of edges in graph.
-        size_t get_num_edges() const {
-            return m_edges_src.size();
-        }
-
-        // Get node labels of graphs.
-        const Labels& get_labels() const {
-            return m_node_labels;
         }
 
         // Returns "true" if edge {u,w} exists, otherwise "false".
@@ -262,9 +268,10 @@ namespace GraphLibrary {
         std::vector<Node> m_edges_src;
         std::vector<Node> m_edges_dst;
 
+        std::set<Label> m_set_node_labels;
         std::set<Label> m_set_edge_labels;
-        Labels m_edge_labels;
         Labels m_node_labels;
+        Labels m_edge_labels;
 
         size_t m_num_nodes;
         const bool m_directed;
