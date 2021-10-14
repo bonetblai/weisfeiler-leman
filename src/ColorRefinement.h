@@ -35,9 +35,6 @@ namespace ColorRefinement {
         explicit ColorRefinement(const GraphLibrary::Graph &graph) : m_graph(graph) { }
         ~ColorRefinement() { }
 
-        // Check if graph "m_graph" is amenable.
-        bool check_amenability();
-
         // Compute stable coloring of graph "m_graph".
         void compute_stable_coloring(std::unordered_set<Label> &node_colors,
                                      std::unordered_multimap<Label, Node> &colors_to_nodes,
@@ -48,8 +45,6 @@ namespace ColorRefinement {
         void compute_stable_coloring(std::unordered_set<Label> &node_colors,
                                      std::unordered_multimap<Label, Node> &colors_to_nodes,
                                      std::unordered_map<Node, Label> &node_to_color) const;
-
-        // Compute stable coloring of graph "m_graph" with edge labels (colors)
 
       private:
         // A graph.
