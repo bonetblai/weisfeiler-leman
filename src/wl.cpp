@@ -166,7 +166,7 @@ int main(int argc, const char **argv) {
 
     for( size_t i = 0; i < graph_db.size(); ++i ) {
         const GraphLibrary::Graph &g = graph_db[i];
-        ColorRefinement::ColorRefinement cra(g);
+        ColorRefinement::ColorRefinement cr(g);
 
         // Manages colors of stable coloring.
         unordered_set<Label> node_colors;
@@ -177,12 +177,12 @@ int main(int argc, const char **argv) {
 
         // Compute stable coloring.
         auto start = chrono::high_resolution_clock::now();
-        cra.compute_stable_coloring(node_colors,
-                                    colors_to_nodes,
-                                    node_to_color,
-                                    g.get_node_labels(),
-                                    g.get_set_edge_labels().size(),
-                                    g.get_edge_labels());
+        cr.compute_stable_coloring(node_colors,
+                                   colors_to_nodes,
+                                   node_to_color,
+                                   g.get_node_labels(),
+                                   g.get_set_edge_labels().size(),
+                                   g.get_edge_labels());
         auto end = chrono::high_resolution_clock::now();
         double elapsed = chrono::duration<double>(end - start).count();
         cout << "WL: #colors=" << node_colors.size() << ", elapsed-time=" << elapsed << endl;
