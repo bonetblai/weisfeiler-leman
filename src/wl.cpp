@@ -1,6 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -142,6 +143,7 @@ int main(int argc, const char **argv) {
         return 0;
     }
 
+    //cout << "Max label number is " << numeric_limits<ulong>::max() << endl;
     string filename = argv[1];
     cout << "Reading file '" << filename << "' ..." << endl;
 
@@ -157,6 +159,9 @@ int main(int argc, const char **argv) {
             cout << "Error: opening file '" << filename << "'" << endl;
             return -1;
         }
+    } else {
+        cout << "Error: unrecognized file extension" << endl;
+        return -1;
     }
 
     for( size_t i = 0; i < graph_db.size(); ++i ) {
