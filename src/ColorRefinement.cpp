@@ -27,20 +27,33 @@ namespace ColorRefinement {
     void ColorRefinement::compute_stable_coloring(unordered_set<Label> &node_colors,
                                                   unordered_multimap<Label, Node> &colors_to_nodes,
                                                   unordered_map<Node, Label> &node_to_color,
+                                                  const vector<Label> &node_labels,
                                                   uint num_edge_labels,
                                                   const vector<Label> &edge_labels) const {
-        // Check assumption that edge colors are in { 0, ..., num_edge_labels - 1}.
+        // Assumption: edge labels are in { 0, ..., num_edge_labels - 1}.
         for( Label label : edge_labels )
             assert(label < num_edge_labels);
 
-        Node num_nodes = m_graph.get_num_nodes();
-        Labels coloring, new_coloring;
+        // Need node labels { 1, ... } since color 0 is marker
+        bool add_one_to_node_labels = false;
+        for( Label label : node_labels ) {
+            if( label == 0 ) {
+                add_one_to_node_labels = true;
+                break;
+            }
+        }
 
-        // Labels each node with the same label.
-        coloring.resize(num_nodes, 0);
-        new_coloring.resize(num_nodes, 1);
+        Node num_nodes = m_graph.get_num_nodes();
+        assert(node_labels.size() == num_nodes);
+        Labels coloring(num_nodes, 0);
+        Labels new_coloring(node_labels);
         uint num_old_colors = -1;
-        uint num_new_colors = 1;
+        uint num_new_colors = 1; // just to make it different
+
+        if( add_one_to_node_labels ) {
+            for( size_t i = 0; i < num_nodes; ++i )
+                ++new_coloring[i];
+        }
 
         unordered_set<Label> new_colors;
         while( num_new_colors != num_old_colors ) {
@@ -103,7 +116,7 @@ namespace ColorRefinement {
     void ColorRefinement::compute_stable_coloring(unordered_set<Label> &node_colors,
                                                   unordered_multimap<Label, Node> &colors_to_nodes,
                                                   unordered_map<Node, Label> &node_to_color) const {
-        return compute_stable_coloring(node_colors, colors_to_nodes, node_to_color, 1, vector<Label>(m_graph.get_num_edges(), 0));
+        return compute_stable_coloring(node_colors, colors_to_nodes, node_to_color, vector<Label>(m_graph.get_num_nodes(), 1), 1, vector<Label>(m_graph.get_num_edges(), 0));
     }
 }
 

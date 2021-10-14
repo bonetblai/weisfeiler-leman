@@ -42,8 +42,9 @@ namespace ColorRefinement {
         void compute_stable_coloring(std::unordered_set<Label> &node_colors,
                                      std::unordered_multimap<Label, Node> &colors_to_nodes,
                                      std::unordered_map<Node, Label> &node_to_color,
-                                     uint num_edge_colors,
-                                     const std::vector<ulong> &edge_colors) const;
+                                     const std::vector<Label> &node_labels,
+                                     uint num_edge_labels,
+                                     const std::vector<Label> &edge_labels) const;
         void compute_stable_coloring(std::unordered_set<Label> &node_colors,
                                      std::unordered_multimap<Label, Node> &colors_to_nodes,
                                      std::unordered_map<Node, Label> &node_to_color) const;
