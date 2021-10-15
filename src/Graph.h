@@ -29,11 +29,11 @@
 
 using uint = unsigned int;
 using ulong = unsigned long;
-using Node = uint;
-using Nodes = std::vector<Node>;
 using Label = ulong;
-using Labels = std::vector<Label>;
+using Node = uint;
 using Edge = uint;
+using Labels = std::vector<Label>;
+using Nodes = std::vector<Node>;
 using Edges = std::vector<Edge>;
 
 namespace std {
@@ -163,8 +163,8 @@ namespace GraphLibrary {
 
         // Add a single node to the graph.
         size_t add_node(Label label = 0) {
-            m_adjacency_lists_outbound.push_back(std::vector<Node>{ });
-            m_adjacency_lists_inbound.push_back(std::vector<Node>{ });
+            m_adjacency_lists_outbound.push_back(Nodes{ });
+            m_adjacency_lists_inbound.push_back(Nodes{ });
             m_node_labels.push_back(label);
             m_set_node_labels.insert(label);
             return m_num_nodes++;
@@ -241,7 +241,7 @@ namespace GraphLibrary {
         const std::set<Label>& get_set_edge_labels() const {
             return m_set_edge_labels;
         }
-        const std::vector<Label>& get_edge_labels() const {
+        const Labels& get_edge_labels() const {
             return m_edge_labels;
         }
 
@@ -265,8 +265,8 @@ namespace GraphLibrary {
       private:
         std::vector<Edges> m_adjacency_lists_outbound;
         std::vector<Edges> m_adjacency_lists_inbound;
-        std::vector<Node> m_edges_src;
-        std::vector<Node> m_edges_dst;
+        Nodes m_edges_src;
+        Nodes m_edges_dst;
 
         std::set<Label> m_set_node_labels;
         std::set<Label> m_set_edge_labels;

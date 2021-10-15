@@ -24,8 +24,6 @@
 #include <unordered_map>
 #include "Graph.h"
 
-using Label = ulong;
-using Labels = std::vector<Label>;
 using Labeling = std::unordered_multimap<Label, Node>;
 
 namespace ColorRefinement {
@@ -39,9 +37,9 @@ namespace ColorRefinement {
         void compute_stable_coloring(std::unordered_set<Label> &node_colors,
                                      std::unordered_multimap<Label, Node> &colors_to_nodes,
                                      std::unordered_map<Node, Label> &node_to_color,
-                                     const std::vector<Label> &node_labels,
+                                     const Labels &node_labels,
                                      uint num_edge_labels,
-                                     const std::vector<Label> &edge_labels) const;
+                                     const Labels &edge_labels) const;
         void compute_stable_coloring(std::unordered_set<Label> &node_colors,
                                      std::unordered_multimap<Label, Node> &colors_to_nodes,
                                      std::unordered_map<Node, Label> &node_to_color) const;

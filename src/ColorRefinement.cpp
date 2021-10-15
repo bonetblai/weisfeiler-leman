@@ -27,10 +27,10 @@ namespace ColorRefinement {
     void ColorRefinement::compute_stable_coloring(unordered_set<Label> &node_colors,
                                                   unordered_multimap<Label, Node> &colors_to_nodes,
                                                   unordered_map<Node, Label> &node_to_color,
-                                                  const vector<Label> &node_labels,
+                                                  const Labels &node_labels,
                                                   uint num_edge_labels,
-                                                  const vector<Label> &edge_labels) const {
-        // Assumption: edge labels are in { 0, ..., num_edge_labels - 1}.
+                                                  const Labels &edge_labels) const {
+        // Assumption: edge labels are in { 0, ..., num_edge_labels - 1 }.
         for( Label label : edge_labels )
             assert(label < num_edge_labels);
 
@@ -116,7 +116,7 @@ namespace ColorRefinement {
     void ColorRefinement::compute_stable_coloring(unordered_set<Label> &node_colors,
                                                   unordered_multimap<Label, Node> &colors_to_nodes,
                                                   unordered_map<Node, Label> &node_to_color) const {
-        return compute_stable_coloring(node_colors, colors_to_nodes, node_to_color, vector<Label>(m_graph.get_num_nodes(), 1), 1, vector<Label>(m_graph.get_num_edges(), 0));
+        return compute_stable_coloring(node_colors, colors_to_nodes, node_to_color, Labels(m_graph.get_num_nodes(), 1), 1, Labels(m_graph.get_num_edges(), 0));
     }
 }
 
