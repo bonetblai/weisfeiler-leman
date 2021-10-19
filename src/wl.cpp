@@ -24,7 +24,7 @@ string join(const vector<string> &args) {
     return result;
 }
 
-vector<string> get_args(const string &atom) {
+vector<string> get_args(const string &atom, bool verbose = false) {
     vector<string> args;
     size_t pos = atom.find_first_of("("), n = 0, rbegin = 0;
     for( size_t i = pos, len = atom.size(); i < len; ++i ) {
@@ -37,7 +37,7 @@ vector<string> get_args(const string &atom) {
         } else if( (n == 1) && ((atom.at(i) == ',') || atom.at(i) == ')') ) {
             int rlen = i - rbegin;
             string arg = atom.substr(rbegin, rlen);
-            //cout << "arg=|" << arg << "|" << endl;
+            if( verbose ) cout << "get_args: pos=" << args.size() << ", arg=|" << arg << "|" << endl;
             args.emplace_back(move(arg));
             if( atom.at(i) == ',' )
                 rbegin = i + 1;
@@ -52,7 +52,7 @@ vector<string> get_args(const string &atom) {
     return args;
 }
 
-GraphLibrary::Graph read_lp_graph(ifstream &ifs) {
+GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring) {
     using boost::algorithm::starts_with;
     using boost::algorithm::ends_with;
 
@@ -136,14 +136,15 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs) {
     for( map<uint, string>::const_iterator it = map_label.begin(); it != map_label.end(); ++it )
         remap_label.emplace(it->first, remap_label.size());
 
-    // setup node colors
+    // setup (initial) node colors (if specified), otherwise initial coloring is uniform
     Labels node_labels(num_nodes, 1);
-    for( map<string, uint>::const_iterator it = map_color.begin(); it != map_color.end(); ++it ) {
-        uint node = map_node.at(it->first);
-        uint color = it->second;
-        assert(node < num_nodes);
-        node_labels[node] = color;
-        //cout << "initial color: node=" << node << ", color=" << color << endl;
+    if( !uniform_initial_coloring ) {
+        for( map<string, uint>::const_iterator it = map_color.begin(); it != map_color.end(); ++it ) {
+            uint node = map_node.at(it->first);
+            uint color = it->second;
+            assert(node < num_nodes);
+            node_labels[node] = color;
+        }
     }
 
     // setup edges
@@ -164,14 +165,43 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs) {
     return GraphLibrary::Graph(num_nodes, edges_src, edges_dst, edge_labels, node_labels, true);
 }
 
+void usage(const string &exec_name, ostream &os) {
+    os << "Usage: " << exec_name << " [--disable-selected-labels] [--help] [--normalize-colors] [--uniform-initial-coloring] <filename>" << endl;
+}
+
 int main(int argc, const char **argv) {
-    if( argc != 2 ) {
-        cout << "Usage: " << argv[0] << " <filename>" << endl;
+    string exec_name(*argv++);
+    --argc;
+
+    // parse options
+    bool opt_normalize_colors = false;
+    bool opt_use_selected_labels = true;
+    bool opt_uniform_initial_coloring = false;
+    for( bool parsing_options = true; parsing_options && (argc > 0) && (**argv == '-'); --argc, ++argv ) {
+        if( string(*argv) == "--disable-selected-labels" ) {
+            opt_use_selected_labels = false;
+        } else if( string(*argv) == "--help" ) {
+            usage(exec_name, cout);
+            return 0;
+        } else if( string(*argv) == "--normalize-colors" ) {
+            opt_normalize_colors = true;
+        } else if( string(*argv) == "--uniform-initial-coloring" ) {
+            opt_uniform_initial_coloring = true;
+        } else if( string(*argv) == "--" ) {
+            parsing_options = false;
+        } else {
+            cout << "Error: unrecognized option '" << *argv << "'" << endl;
+            return -1;
+        }
+    }
+
+    if( argc == 0 ) {
+        usage(exec_name, cout);
         return 0;
     }
 
     //cout << "Max label number is " << numeric_limits<ulong>::max() << endl;
-    string filename = argv[1];
+    string filename = argv[0];
     cout << "Reading file '" << filename << "' ..." << endl;
 
     GraphLibrary::GraphDatabase graph_db;
@@ -179,7 +209,7 @@ int main(int argc, const char **argv) {
         // reading a graph description from clingo file (ext .lp)
         ifstream ifs(filename, ifstream::in);
         if( ifs.is_open() ) {
-            GraphLibrary::Graph g = read_lp_graph(ifs);
+            GraphLibrary::Graph g = read_lp_graph(ifs, opt_uniform_initial_coloring);
             graph_db.emplace_back(move(g));
             ifs.close();
         } else {
