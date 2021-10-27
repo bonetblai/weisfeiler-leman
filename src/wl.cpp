@@ -52,7 +52,7 @@ vector<string> get_args(const string &atom, bool verbose = false) {
     return args;
 }
 
-GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring) {
+GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring, bool use_chosen_labels) {
     using boost::algorithm::starts_with;
     using boost::algorithm::ends_with;
 
@@ -61,7 +61,7 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring) 
     map<pair<string, string>, uint> map_edge;
     map<pair<string, string>, Labels> map_edge_labels;
     map<string, uint> map_color;
-    set<uint> selected;
+    set<uint> chosen_labels;
 
     string ifs_line;
     while( getline(ifs, ifs_line) ) {
@@ -100,11 +100,11 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring) 
             if( map_edge_labels.find(edge) == map_edge_labels.end() )
                 map_edge_labels.emplace(edge, Labels{});
             map_edge_labels[edge].push_back(label);
-        } else if( starts_with(ifs_line, "selected(") ) {
+        } else if( starts_with(ifs_line, "chosen(") ) {
             vector<string> args = get_args(ifs_line);
             assert(args.size() == 1);
             uint label = atoi(args[0].c_str());
-            selected.insert(label);
+            chosen_labels.insert(label);
         } else if( starts_with(ifs_line, "color(") ) {
             vector<string> args = get_args(ifs_line);
             assert(args.size() == 2);
@@ -154,7 +154,7 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring) 
         const Labels &labels = map_edge_labels.at(it->first);
         assert(labels.size() == 1);
         uint label = labels.front();
-        if( selected.find(label) != selected.end() ) {
+        if( !use_chosen_labels || (chosen_labels.find(label) != chosen_labels.end()) ) {
             edges_src.push_back(map_node.at(it->first.first));
             edges_dst.push_back(map_node.at(it->first.second));
             edge_labels.push_back(remap_label.at(label));
@@ -166,7 +166,7 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring) 
 }
 
 void usage(const string &exec_name, ostream &os) {
-    os << "Usage: " << exec_name << " [--disable-selected-labels] [--help] [--normalize-colors] [--uniform-initial-coloring] <filename>" << endl;
+    os << "Usage: " << exec_name << " [--disable-chosen-labels] [--help] [--normalize-colors] [--uniform-initial-coloring] <filename>" << endl;
 }
 
 int main(int argc, const char **argv) {
@@ -175,11 +175,11 @@ int main(int argc, const char **argv) {
 
     // parse options
     bool opt_normalize_colors = false;
-    bool opt_use_selected_labels = true;
+    bool opt_use_chosen_labels = true;
     bool opt_uniform_initial_coloring = false;
     for( bool parsing_options = true; parsing_options && (argc > 0) && (**argv == '-'); --argc, ++argv ) {
-        if( string(*argv) == "--disable-selected-labels" ) {
-            opt_use_selected_labels = false;
+        if( string(*argv) == "--disable-chosen-labels" ) {
+            opt_use_chosen_labels = false;
         } else if( string(*argv) == "--help" ) {
             usage(exec_name, cout);
             return 0;
@@ -209,7 +209,7 @@ int main(int argc, const char **argv) {
         // reading a graph description from clingo file (ext .lp)
         ifstream ifs(filename, ifstream::in);
         if( ifs.is_open() ) {
-            GraphLibrary::Graph g = read_lp_graph(ifs, opt_uniform_initial_coloring);
+            GraphLibrary::Graph g = read_lp_graph(ifs, opt_uniform_initial_coloring, opt_use_chosen_labels);
             graph_db.emplace_back(move(g));
             ifs.close();
         } else {
