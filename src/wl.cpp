@@ -166,7 +166,9 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring, 
 }
 
 void usage(const string &exec_name, ostream &os) {
-    os << "Usage: " << exec_name << " [--disable-chosen-labels] [--help] [--normalize-colors] [--uniform-initial-coloring] <filename>" << endl;
+    os << "Usage: " << exec_name << " [--disable-chosen-labels] [--help] [--normalize-colors] [--uniform-initial-coloring] <filename>" << endl
+       << endl
+       << "Note: use --disable-chosen-labels for using all labels in graph" << endl;
 }
 
 int main(int argc, const char **argv) {
@@ -260,7 +262,10 @@ int main(int argc, const char **argv) {
         for( Label label : node_colors ) {
             uint n = colors_to_nodes.count(label);
             total += n;
-            cout << n << " node(s) with color " << label << endl;
+            cout << n << " node(s) with color " << label << " :";
+            for( auto it = colors_to_nodes.find(label); it != colors_to_nodes.end() && it->first == label; ++it )
+              cout << " " << it->second;
+            cout << endl;
         }
         cout << "total " << total << " node(s)" << endl;
 
