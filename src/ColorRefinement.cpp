@@ -24,12 +24,13 @@
 using namespace std;
 
 namespace ColorRefinement {
-    void ColorRefinement::compute_stable_coloring(unordered_set<Label> &node_colors,
-                                                  unordered_multimap<Label, Node> &colors_to_nodes,
-                                                  unordered_map<Node, Label> &node_to_color,
-                                                  const Labels &node_labels,
-                                                  uint num_edge_labels,
-                                                  const Labels &edge_labels) const {
+    int ColorRefinement::compute_stable_coloring(unordered_set<Label> &node_colors,
+                                                 unordered_multimap<Label, Node> &colors_to_nodes,
+                                                 unordered_map<Node, Label> &node_to_color,
+                                                 const Labels &node_labels,
+                                                 uint num_edge_labels,
+                                                 const Labels &edge_labels,
+                                                 bool normalize_colors) const {
         // Assumption: edge labels are in { 0, ..., num_edge_labels - 1 }.
         for( Label label : edge_labels )
             assert(label < num_edge_labels);
@@ -55,12 +56,14 @@ namespace ColorRefinement {
                 ++new_coloring[i];
         }
 
+        int num_iterations = 0;
         unordered_set<Label> new_colors;
         while( num_new_colors != num_old_colors ) {
             // Update coloring.
             coloring = new_coloring;
             num_old_colors = num_new_colors;
             new_colors.clear();
+            ++num_iterations;
 
             // Iterate over all nodes.
             for( Node v = 0; v < num_nodes; ++v ) {
@@ -104,6 +107,21 @@ namespace ColorRefinement {
                 new_coloring[v] = new_color;
             }
             num_new_colors = new_colors.size();
+
+            if( normalize_colors ) {
+                unordered_map<Label, Label> normalized_colors;
+                unordered_set<Label> new_new_colors;
+                for( Node v = 0; v < num_nodes; ++v ) {
+                    Label color = new_coloring[v];
+                    if( normalized_colors.find(color) == normalized_colors.end() ) {
+                        normalized_colors[color] = 1 + normalized_colors.size();
+                        new_new_colors.insert(normalized_colors[color]);
+                    }
+                    new_coloring[v] = normalized_colors[color];
+                }
+                assert(normalized_colors.size() == num_new_colors);
+                new_colors = new_new_colors;
+            }
         }
 
         node_colors = new_colors;
@@ -111,12 +129,20 @@ namespace ColorRefinement {
             colors_to_nodes.insert({{new_coloring[i], i}});
             node_to_color.insert({{i, new_coloring[i]}});
         }
+        return num_iterations;
     }
 
-    void ColorRefinement::compute_stable_coloring(unordered_set<Label> &node_colors,
-                                                  unordered_multimap<Label, Node> &colors_to_nodes,
-                                                  unordered_map<Node, Label> &node_to_color) const {
-        return compute_stable_coloring(node_colors, colors_to_nodes, node_to_color, Labels(m_graph.get_num_nodes(), 1), 1, Labels(m_graph.get_num_edges(), 0));
+    int ColorRefinement::compute_stable_coloring(unordered_set<Label> &node_colors,
+                                                 unordered_multimap<Label, Node> &colors_to_nodes,
+                                                 unordered_map<Node, Label> &node_to_color,
+                                                 bool normalize_colors) const {
+        return compute_stable_coloring(node_colors,
+                                       colors_to_nodes,
+                                       node_to_color,
+                                       Labels(m_graph.get_num_nodes(), 1),
+                                       1,
+                                       Labels(m_graph.get_num_edges(), 0),
+                                       normalize_colors);
     }
 }
 

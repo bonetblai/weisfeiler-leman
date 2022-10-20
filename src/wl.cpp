@@ -166,7 +166,16 @@ GraphLibrary::Graph read_lp_graph(ifstream &ifs, bool uniform_initial_coloring, 
 }
 
 void usage(const string &exec_name, ostream &os) {
-    os << "Usage: " << exec_name << " [--disable-chosen-labels] [--help] [--normalize-colors] [--uniform-initial-coloring] <filename>" << endl
+    os << "Usage: " << exec_name << " [--disable-chosen-labels] [--help] [--normalize-colors] [--uniform-initial-coloring] filename" << endl
+       << endl
+       << "positional arguments:" << endl
+       << "  filename                      file containing graph" << endl
+       << endl
+       << "optional arguments:" << endl
+       << "  --help                        show this help message and exit" << endl
+       << "  --disable-chosen-labels       don't use chosen() atoms in input (if enabled, all labels are considered)" << endl
+       << "  --normalize-colors            normalize node colors after each iteration to reduce overflows" << endl
+       << "  --uniform-initial-coloring    force uniform initial node coloring" << endl
        << endl
        << "Note: use --disable-chosen-labels for using all labels in graph" << endl;
 }
@@ -247,15 +256,16 @@ int main(int argc, const char **argv) {
 
         // Compute stable coloring.
         auto start = chrono::high_resolution_clock::now();
-        cr.compute_stable_coloring(node_colors,
-                                   colors_to_nodes,
-                                   node_to_color,
-                                   g.get_node_labels(),
-                                   map_edge_label.size(),
-                                   edge_labels);
+        int num_iterations = cr.compute_stable_coloring(node_colors,
+                                                        colors_to_nodes,
+                                                        node_to_color,
+                                                        g.get_node_labels(),
+                                                        map_edge_label.size(),
+                                                        edge_labels,
+                                                        opt_normalize_colors);
         auto end = chrono::high_resolution_clock::now();
         double elapsed = chrono::duration<double>(end - start).count();
-        cout << "WL: #colors=" << node_colors.size() << ", elapsed-time=" << elapsed << endl;
+        cout << "WL: #iterations=" << num_iterations << ", #colors=" << node_colors.size() << ", elapsed-time=" << elapsed << endl;
 
         // Print summary of coloring.
         uint total = 0;

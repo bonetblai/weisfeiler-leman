@@ -34,15 +34,17 @@ namespace ColorRefinement {
         ~ColorRefinement() { }
 
         // Compute stable coloring of graph "m_graph".
-        void compute_stable_coloring(std::unordered_set<Label> &node_colors,
-                                     std::unordered_multimap<Label, Node> &colors_to_nodes,
-                                     std::unordered_map<Node, Label> &node_to_color,
-                                     const Labels &node_labels,
-                                     uint num_edge_labels,
-                                     const Labels &edge_labels) const;
-        void compute_stable_coloring(std::unordered_set<Label> &node_colors,
-                                     std::unordered_multimap<Label, Node> &colors_to_nodes,
-                                     std::unordered_map<Node, Label> &node_to_color) const;
+        int compute_stable_coloring(std::unordered_set<Label> &node_colors,
+                                    std::unordered_multimap<Label, Node> &colors_to_nodes,
+                                    std::unordered_map<Node, Label> &node_to_color,
+                                    const Labels &node_labels,
+                                    uint num_edge_labels,
+                                    const Labels &edge_labels,
+                                    bool normalize_colors=false) const;
+        int compute_stable_coloring(std::unordered_set<Label> &node_colors,
+                                    std::unordered_multimap<Label, Node> &colors_to_nodes,
+                                    std::unordered_map<Node, Label> &node_to_color,
+                                    bool normalize_colors=false) const;
 
       private:
         // A graph.
