@@ -10,7 +10,7 @@ def parse_arguments():
     parser.add_argument('filename', type=str, nargs='+', help='file containing graph')
     parser.add_argument('--debug', action='store_true', help='print some debugging info')
     parser.add_argument('--disable-chosen-labels', action='store_true', help="don't use chosen() atoms in input (if enabled, all labels are considered)")
-    parser.add_argument('--normalize-colors', action='store_true', help='')
+    parser.add_argument('--normalize-colors', action='store_true', help='normalize node colors after each iteration to avoid overflows')
     parser.add_argument('--uniform-initial-coloring', action='store_true', help='force uniform initial node coloring')
     args = parser.parse_args()
     return args
@@ -140,7 +140,10 @@ def read_lp_graph(filename, uniform_initial_coloring=False, use_chosen_labels=Fa
 
 def main(args):
     for filename in args.filename:
-        graph = read_lp_graph(Path(filename), debug=args.debug)
+        graph = read_lp_graph(Path(filename),
+                              uniform_initial_coloring=args.uniform_initial_coloring,
+                              use_chosen_labels=not args.disable_chosen_labels,
+                              debug=args.debug)
         cr = ColorRefinement(graph)
 
         # remap edge labels so that they fall in { 0, ..., num_edge_labels - 1 }
@@ -157,11 +160,12 @@ def main(args):
         kwargs = {
             'node_labels': graph.get_node_labels(),
             'edge_labels': edge_labels,
-            'num_edge_labels': len(map_edge_label)
+            'num_edge_labels': len(map_edge_label),
+            'normalize_colors': args.normalize_colors
         }
-        node_colors, color_to_nodes, node_to_color = cr.compute_stable_coloring(**kwargs)
+        num_iterations, node_colors, color_to_nodes, node_to_color = cr.compute_stable_coloring(**kwargs)
         elapsed_time = timer() - start_time
-        print(f'WL: #colors={len(node_colors)}, elapsed_time={elapsed_time}')
+        print(f'WL: #iterations={num_iterations}, #colors={len(node_colors)}, elapsed_time={elapsed_time}')
 
         # print summary of coloring
         total = 0

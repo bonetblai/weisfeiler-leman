@@ -36,6 +36,7 @@ class ColorRefinement:
         node_labels = kwargs['node_labels'] if 'node_labels' in kwargs else [1] * self._graph.get_num_nodes()
         num_edge_labels = kwargs['num_edge_labels'] if 'num_edge_labels' in kwargs else 1
         edge_labels = kwargs['edge_labels'] if 'edge_labels' in kwargs else [0] * self._graph.get_num_edges()
+        normalize_colors = kwargs['normalize_colors'] if 'normalize_colors' in kwargs else False
 
         # assumption: edge labels are in { 0, ..., num_edge_labels - 1 }.
         for label in edge_labels: assert label < num_edge_labels
@@ -61,9 +62,11 @@ class ColorRefinement:
             new_colors.add(new_coloring[v])
         num_new_colors = len(new_colors)
 
+        num_iterations = 0
         while num_new_colors != num_old_colors:
             # update coloring
-            coloring = new_coloring
+            num_iterations += 1
+            coloring = list(new_coloring) # copy
             num_old_colors = num_new_colors
             new_colors.clear()
 
@@ -74,7 +77,7 @@ class ColorRefinement:
                 inbound_edges = self._graph.get_inbound_edges(v)
                 colors = [ [] for _ in range(2 * num_edge_labels) ]
 
-                # process edges by color whilte getting colors of neighbors
+                # process edges by color while getting colors of neighbors
                 for e in outbound_edges:
                     assert self._graph.get_src(e) == v
                     n = self._graph.get_dst(e)
@@ -106,6 +109,19 @@ class ColorRefinement:
                 new_coloring[v] = new_color
             num_new_colors = len(new_colors)
 
+            # normalize colors
+            if normalize_colors:
+                normalized_colors = dict()
+                new_new_colors = set()
+                for v in range(num_nodes):
+                    color = new_coloring[v]
+                    if color not in normalized_colors:
+                        normalized_colors[color] = np.int64(1 + len(normalized_colors))
+                        new_new_colors.add(normalized_colors[color])
+                    new_coloring[v] = normalized_colors[color]
+                assert len(normalized_colors) == num_new_colors
+                new_colors = new_new_colors
+
         # compute output
         node_colors = new_colors
         color_to_nodes, node_to_color = dict(), []
@@ -115,7 +131,7 @@ class ColorRefinement:
                 color_to_nodes[color] = set()
             color_to_nodes[color].add(v)
             node_to_color.append(color)
-        return node_colors, color_to_nodes, node_to_color
+        return num_iterations, node_colors, color_to_nodes, node_to_color
 
     # pairing function: bijection of NxN onto N
     def pairing(self, a, b):
