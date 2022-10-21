@@ -7,9 +7,9 @@ Built from the code for the Amenability Test by Christopher Morris (https://gith
 We currently only support graphs specified in ASP (clingo) programs.
 Future work includes supporting more graph formats.
 
-We provide two implementations, one in C++ and another in python. Both are basically equal: the accept the same
-options and arguments. The executable is called with the filename containing the directed colored graph. Options
-are:
+We provide three implementations, one in C++,  one in python, and another in clingo (ASP). The first two are basically
+equal: they accept the same options and arguments, and the executables are called with the filename containing the
+directed colored graph. The options are:
 
 * ```--disable-chosen-labels``` for not using the atoms ```choose()``` in the file that specifies which labels
 to take into account. With this option, all labels are considered.
@@ -92,3 +92,7 @@ color(21,5)
 ```
 
 The output is the same. As it can be seen, there are overflows when computing the "pairing" function (the warning is emitted only for the first overflow). This is due that 64-bits integers are used rather than python bignums which are of arbitrary precision but much slower.
+
+The ASP implementation is a logical description of the constraints that an admissible coloring must satisfy. The solver then looks for an
+admissible coloring with minimum number of colors.
+
